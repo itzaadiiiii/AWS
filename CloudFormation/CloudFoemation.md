@@ -113,5 +113,3 @@ In real projects:
 👉 Either **remove, comment, or use `{}`**
 
 ---
-
-If you want, I’ll give you a **perfect starter template (used in companies + interview ready)** 🚀
