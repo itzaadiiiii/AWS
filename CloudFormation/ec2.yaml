@@ -3,7 +3,15 @@ Description: ---
 Metadata: 
 
 Parameters: 
-
+  myVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: --.--.--.--/--
+      EnableDnsSupport: true
+      Tags:
+        - Key: keyname
+          Value: value
+  
 Mappings: 
 
 Conditions: 
