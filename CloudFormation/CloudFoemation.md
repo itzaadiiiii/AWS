@@ -1,6 +1,6 @@
 # Install VS Code Extension:
 ---
-- Install: AWS CloudFormation / cfn-lint extension
+- Install: AWS CloudFormation / CloudFormation Linter
 - Create file: ec2.yaml (or .yml)
 - Type: start → auto-generates template (snippet)
 - Keep only required sections
