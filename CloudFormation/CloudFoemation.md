@@ -1,3 +1,12 @@
+# Install VS Code Extension:
+---
+- Install: AWS CloudFormation / cfn-lint extension
+- Create file: ec2.yaml (or .yml)
+- Type: start → auto-generates template (snippet)
+- Keep only required sections
+- Remove or comment unused sections (do NOT leave empty keys)
+---
+
 # CloudFormation Rules:
 **Any section you leave empty like this will break cfn-lint**, not just `Metadata`.
 
