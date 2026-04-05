@@ -1,21 +1,26 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: ---
-Metadata: 
+Metadata: {
+  "AWS::CloudFormation::Interface": {
+    "ParameterGroups": [
+      {
+        "Label": { "default": "VPC Configuration" },
+        "Parameters": [ "myVPC" ]
+      }
+    ],
+    "ParameterLabels": {
+      "myVPC": { "default": "VPC CIDR Block" }
+    }
+  }
+}
 
-Parameters: 
+Resources:
   myVPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: --.--.--.--/--
+      CidrBlock: 10.0.0.0/16
       EnableDnsSupport: true
       Tags:
-        - Key: keyname
-          Value: value
-  
-Mappings: 
-
-Conditions: 
-
-Resources: 
-
-Outputs:
+        - Key: Name
+          Value: my-vpc
+      InstanceTenancy: default
