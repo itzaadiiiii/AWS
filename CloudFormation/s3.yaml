@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for a private S3 bucket with versioning enabled
+
+Resources:
+  MyPrivateBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      # Bucket name (optional - if not specified, CloudFormation will generate a unique name)
+      # BucketName: my-unique-bucket-name-12345   # Uncomment and customize if needed
+
+      # Make the bucket private (no public access)
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+      # Enable versioning
+      VersioningConfiguration:
+        Status: Enabled
+
+      # Optional: Enable server-side encryption (recommended)
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+      # Optional: Lifecycle rules (example - transition to Glacier after 365 days)
+      # LifecycleConfiguration:
+      #   Rules:
+      #     - Id: TransitionToGlacier
+      #       Status: Enabled
+      #       Transitions:
+      #         - StorageClass: GLACIER
+      #           TransitionInDays: 365
+
+Outputs:
+  BucketName:
+    Description: Name of the S3 bucket
+    Value: !Ref MyPrivateBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-BucketName"
+
+  BucketArn:
+    Description: ARN of the S3 bucket
+    Value: !GetAtt MyPrivateBucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-BucketArn"
