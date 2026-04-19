@@ -33,16 +33,3 @@ Resources:
       #       Transitions:
       #         - StorageClass: GLACIER
       #           TransitionInDays: 365
-
-Outputs:
-  BucketName:
-    Description: Name of the S3 bucket
-    Value: !Ref MyPrivateBucket
-    Export:
-      Name: !Sub "${AWS::StackName}-BucketName"
-
-  BucketArn:
-    Description: ARN of the S3 bucket
-    Value: !GetAtt MyPrivateBucket.Arn
-    Export:
-      Name: !Sub "${AWS::StackName}-BucketArn"
