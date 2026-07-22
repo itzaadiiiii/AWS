@@ -1,0 +1,462 @@
+
+AWS CI/CD Pipeline | Deploy Production-Grade Full-Stack App | CodeBuild, CodeDeploy, CodePipeline
+=================================================================================================
+1 Create own VPC
+2.Create Security Groups
+3.Create S3 Bucket for code
+4.Create IAM ROLES
+5.Create RDS MySQL
+6.Create App Server and setup application 
+7.Create Internal Load Balancer for App Servers
+8.Create Web Server and setup nginx
+9.Create External Load Balancer for Web Servers
+10.Setup ASG for Web Servers
+11.Setup ASG for App Servers
+Parameter store for storing secrets(username,pwd)
+Create S3 Private Bucket for artifacts
+
+Configuring CodeBuild for Application Tier
+Configuring CodeDeploy for Application Tier
+Configuring AWS CodePipeline for Application Tier
+
+Configuring CodeBuild for Web/Presentation Tier
+Configuring CodeDeploy for Web/Presentation Tier
+Configuring AWS CodePipeline for Web/Presentation Tier
+
+12.Setup HTTPS 
+13.Setup Route53
+
+buildspec.yml is a YAML file that defines the build process for AWS CodeBuild. It contains instructions on how to install dependencies, run tests, build artifacts, and deploy applications.
+
+appsec.yml is typically used for application related, install, move, copy etc in CodePipeline.
+
+1. Create a VPC 
+===============
+
+   Name = 3-tier-project
+   CIDR =  192.168.0.0/16
+   Tenancy = Default
+   VPC actions --> Enable DNS hostnames 
+
+--> Create IGW(3-tier-project-IGW) and attach to VPC
+
+
+-->     Create : 2 Public Subnets (192.168.1.0/24 and 192.168.2.0/24 ) [For Bastion/ELB or use SSM]
+        Create : 6 Private Subnets (192.168.3.0/24, 192.168.4.0/24, 192.168.5.0/24, 192.168.6.0/24, 192.168.7.0/24, 192.168.8.0/24)
+                                        Web              Web          Application      Application    Database         Database
+
+        PublicSubnet-1a(192.168.1.0/24),       PublicSubnet-1b(192.168.2.0/24)
+        PrivateSubnet-Web-1a(192.168.3.0/24) , PrivateSubnet-Web-1b (192.168.4.0/24)
+        PrivateSubnet-App-1a(192.168.5.0/24) , PrivateSubnet-App-1b(192.168.6.0/24)
+        PrivateSubnet-Db-1a(192.168.7.0/24) ,  PrivateSubnet-Db-1b(192.168.8.0/24)
+
+  
+--> Create NAT(3-tier-project-NAT) with EIP in PublicSubnet1a
+
+--> Create Routing Tables  : 3-tier-project-public-rt and 3-tier-project-private-rt
+
+    3-tier-project-public-rt --> IGW and associate PublicSubnet-1a, PublicSubnet-1b
+    3-tier-project-private-rt --> NAT and associate all private subnets
+
+    Select Subnets --> PublicSubnet-1a --> Actions --> Edit Subnet Settings --> Enable Auto-assign public ip
+    Select Subnets --> PublicSubnet-1b --> Actions --> Edit Subnet Settings --> Enable Auto-assign public ip
+
+
+--> Create 6 Security Groups = (1 BastionHost, 1 Web ALB(external), 1 WebServer, 1 App Internal ALB, 1 App Server, 1DB)
+
+    Create Bastion-SG - Inbound ssh ,  Anywhere 0.0.0.0/0  , Tag : Name = Bastion-SG
+
+    Create WebALB-SG - Inbound http, https ,  Anywhere 0.0.0.0/0 
+
+    Create Web-SG - Inbound http, https , custom = Allow from WebALB-SG or 192.168.0.0/16
+                    Inbound ssh from Custom = Bastion-SG
+
+    Create AppALB-SG - Inbound http, https , custom = Allow from Web-SG or 192.168.0.0/16
+
+    Create App-SG - Inbound custom TCP Port 3200 ,  custom = Allow from AppALB-SG or 192.168.0.0/16  [Nodejs app using 3200]
+                    Inbound ssh from Custom = Bastion-SG
+
+
+    Create Database-SG - Inbound MySQL, Custom  = Allow from App-SG or 192.168.0.0/16. we are giving access to entire vpc traffic
+                         Inbound MySQL, Custom = Bastion-SG
+    
+2. Launching Bastion Host - Amazon Linux 2023-Public Subnet, and Bastion-SG
+=======================================================
+
+
+3. Create 3 IAM ROLES for EC2, AWS-CodeBuild and AWS-CodeDeploy, AWS-CodePipeline
+===============================================================
+   
+--> For EC2  
+
+   TE = EC2, 
+   Permissions = CloudWatchLogsFullAccess, CloudWatchAgentServerPolicy, AmazonEC2RoleforAWSCodeDeploy, or AdminAccess
+   Name = 3-tier-ec2-role
+
+--> For AWS-CodeBuild 
+
+   TE = CodeBuild 
+   Permissions = AmazonS3FullAccess(for artifacts), AWSCodeBuildAdminAccess, AmazonSSMReadOnlyAccess(for paramter-store to store creds) , Cloudwatchlogsfullaccess  or AdminAccess
+   Name = 3-tier-codebuild-role
+
+--> For AWS-CodeDeploy
+
+   TE = CodeDeploy
+   Permissions = AWScodedeployrole ,  CloudWatchLogsFullAccess, CloudWatchAgentServerPolicy  or AdminAccess
+   Name = 3-tier-codedeploy-role
+
+--> For AWS-CodePipeline
+    TE = CodePipeline
+    Permissions= Admin
+    Name = 3-tier-codepipeline-role
+
+4. Create RDS instance - MySQL
+===============================
+
+   --> As we created a new VPC, we need to create a DB under this VPC. But this new VPC doesn't have any DB Subnet Group for Subnets.
+   Create Subnet Group first
+   Name = tier-Subnet-Group
+   Description = 3tier-Subnet-Group
+   VPC = 3-tier-project
+   AZ = 1a and 1b
+   Subnets = db-1a and db-1b
+
+  Create RDS DB instance - MySQL
+  DB identifier = dev-db-instance
+  VPC = 3-tier-vpc
+  Username = admin
+  Password = root123456
+  SG = Database-SG
+  DB Subnet Group = tier-Subnet-Group
+  Public Access = NO
+  Security Group = Database-SG
+  Sample DB = NO
+  Backups = NO [will create fastly]
+  Encryption = yes
+
+Endpoint = dev-db-instance.cdbmlufgqkjd.ap-south-1.rds.amazonaws.com
+Username = admin
+Password = root123456
+   
+5. Connect to Bastion through MobaXterm and setup databases and tables
+=============================================================================
+
+    sudo -s
+    cd /home/ec2-user
+
+    install MySQL Client
+     ----------------------
+    sudo dnf install mariadb105 -y
+
+    Connect to the RDS database and create databases
+    --------------------------------------------------------
+    mysql -h dev-db-instance.cdbmlufgqkjd.ap-south-1.rds.amazonaws.com -u admin -p
+    pwd: root123456
+
+--> Go to Project folder --> backend --> open db file and run the database commands
+
+
+6. Setup Application Tier 
+==========================
+
+   Create Launch template for application tier for EC2 instances
+   Create Empty Target Group
+   Create Internal Application Load Balancer
+   Create Auto-Scaling Group 
+
+--> Create Launch template
+    Name = application-tier-LT
+    Auto Scaling guidance = Check
+    AMI = Amazon Linux 2023
+    Type = t2.micro
+    Key-Pair =
+    Subnets = Dont include
+    SG = App-SG
+    Instance role = 3-tier-ec2-role
+    user-data = copy paste the notepad(app-tier-user-data) user-data script
+
+--> Create Empty Target Group
+    
+	Create target group
+	Target Type = Instance
+	Target Group Name = app-tier-tg
+	Protocol = http, port = 3200
+	VPC = 3-tier-vpc-project
+	Health Check = /health  [curl http://localhost:4000/health as application is using /health for health check]
+	Dont select any instance
+	Create Empty Target Group
+
+--> Now Create Internal ALB
+
+	Name = app-tier-internal-alb
+	Scheme = Internal
+	VPC = 3-tier-vpc-project
+	AZ = 1a = PrivateSubnet-App-1a
+	AZ = 1b = PrivateSubnet-App-1b
+	Security Group = AppALB-SG
+	Protocol http = 80 = Select target group = app-tier-tg
+
+--> Create Auto-Scaling Group
+	Name = application-tier-ASG
+        LT = application-tier-LT
+	AZ = 1a = PrivateSubnet-App-1a
+	AZ = 1b = PrivateSubnet-App-1b 	
+        Attach to existing LB = Select TG- app-tier-tg
+	Turn on Elastic Load Balancing health checks
+	DC = 2, Min=2, Max = 4
+	Target tracking scaling policy = Avg CPU = Target value = 70%
+	Monitoring= Enable group metrics collection within CloudWatch.
+
+7. Setup Web/Presentation Tier 
+===============================
+
+   Create Launch template for web tier for EC2 instances
+   Create Empty Target Group
+   Create external Application Load Balancer
+   Create Auto-Scaling Group 
+
+--> Create Launch template
+    Name = web-tier-LT
+    Auto Scaling guidance = Check
+    AMI = Amazon Linux 2023
+    Type = t2.micro
+    Key-Pair =
+    SG = web-SG
+    Instance role = 3-tier-ec2-role
+    user-data = copy paste the notepad(web-tier-user-data) user-data script [Modify user-data with internal alb and CNAME] Note: use http://elbdnsname
+
+--> Create Empty Target Group
+    
+	Create target group
+	Target Type = Instance
+	Target Group Name = web-tier-tg
+	Protocol = http, port = 80
+	VPC = 3-tier-vpc-project
+	Health Check = /health  [curl http://localhost:4000/health as application is using /health for health check]
+	Dont select any instance
+	Create Empty Target Group
+
+--> Now Create External ALB
+
+	Name = web-tier-external-alb
+	Scheme = InternetFacing
+	VPC = 3-tier-vpc-project
+	AZ = 1a = PublicSubnet-1a
+	AZ = 1b = PublicSubnet-1b
+	Security Group = WebALB-SG
+	Protocol http = 80 = Select target group = web-tier-tg
+
+--> Create Auto-Scaling Group
+	Name = web-tier-ASG
+        LT = web-tier-LT
+	AZ = 1a = PrivateSubnet-web-1a
+	AZ = 1b = PrivateSubnet-web-1b 	
+        Attach to existing LB = Select TG- web-tier-tg
+	Turn on Elastic Load Balancing health checks
+	DC = 2, Min=2, Max = 4
+	Target tracking scaling policy = Avg CPU = Target value = 70%
+	Monitoring= Enable group metrics collection within CloudWatch.
+
+Check now External Load Balancer DNS name in browser , you should see nginx page
+
+--> Go to CloudWatch --> logs --> see all log groups with logs got created except node-app-logs-backend
+    Create a Log Group --> Name = node-app-logs-backend
+
+8. Setting up Parameters in SSM
+==============================
+We are storing all creds in parameter store as per real time best practise
+
+Go to code --> backend --> buildspec --> we need to create 5 variables 
+
+  parameter-store:
+    DB_PASSWORD: "/nodeapp/db/password"
+    DB_HOST: "/nodeapp/db/hostname"
+    DB_PORT: "/nodeapp/db/port"
+    DB_USER: "/nodeapp/db/user"
+    DB_NAME: "/nodeapp/db/name"
+
+
+Navigate to Systems Manager --> Parameter stores
+
+	create parameter
+ 	Name = /nodeapp/db/hostname
+	Tier = standard
+	Type = string
+	Data type = text
+	Value = dev-db-instance.cdbmlufgqkjd.ap-south-1.rds.amazonaws.com
+
+	create parameter
+ 	Name = /nodeapp/db/name
+	Tier = standard
+	Type = string
+	Data type = text
+	Value = react_node_app
+
+	create parameter
+ 	Name = /nodeapp/db/password
+	Tier = standard
+	Type = string
+	Data type = text
+	Value = learnIT02#
+
+	create parameter
+ 	Name = /nodeapp/db/port
+	Tier = standard
+	Type = string
+	Data type = text
+	Value = 3306
+
+	create parameter
+ 	Name = /nodeapp/db/user
+	Tier = standard
+	Type = string
+	Data type = text
+	Value = appuser
+
+
+
+
+9. Create a S3 Private Bucket (3-tier-project-codebuild-artifacts) 
+=================================================================
+
+
+10: Setup CI / CD for the Project: Configuring CodeBuild for Application Tier
+=============================================================================
+
+Go to CodePipeline --> Settings ---> Connections --> Create Connection --> Select Provider --> github --> connectioname --> fullrepoaccess --> Connect
+Install new app ---> and continue and give full access to all repos
+
+or
+-> Create a new GitHub connection --> connection name=githubconnection --> connect to github--> authorize aws connector for GitHub --> instal a new app --> only select repositories --> select your repo --> install&authorize --> connect--> select dropdown --> githubconnection ---> save
+
+Navigate to CodeBuild
+
+	Create Project
+	Name = backend-build
+	Source 1 - Primary = GitHub [By default, there is no connection from aws to GitHub. Let connect ]
+	Repository in my GitHub account = Select Repository : aws-cicd-react-node-mysql-app
+	Webhook = select Rebuild --> single build --> expand Webhook event filter groups --> Select Push
+	Existing Service role = 3-tier-codebuild-role
+	BuildSpec = use a BuildSpec file --> backend/buildspec.yml
+	Logs --> Groupname = codebuild-logs-backend
+	Create  Build Project 
+
+--> If Webhook creation failed --> Go to GitHub repo--> aws-cicd-react-node-mysql-app --> Settings --> webhooks --> dont have any webhooks
+
+--> Go to CodeBuild --> Edit Project to retry webhook creation [Red color error]
+    Webhook = select Rebuild --> single build --> Add filter group --> Select Push
+    Check all parameter 
+
+If still doesn't work , add manually --> go to repo --> setting --> webhooks 
+
+https://codebuild.ap-south-1.amazonaws.com/webhook
+Content type * = application/json
+
+
+11: Setup CI / CD for the Project: Configuring CodeDeploy for Application Tier
+=============================================================================
+
+Navigate to CodeDeploy --> Applications --> Create Application
+	Name = backend-deploy
+	Compute Platform = EC2
+	Go inside  backend-deploy and create Deployment Group
+	
+	Enter a deployment group name = backend-Deployment-grp
+	Service role = 3-tier-codedeploy-role
+	Deployment type = In Place
+	Environment Configuration = Amazon EC2 Auto-Scaling Group = application-tier-ASG
+	Deployment Settings = CodeDeployDefault.Allatonce
+	Load Balancer = Enable Load Balancer--> Application Load Balancer or Network Load Balancer --> Target Group = app-tier-tg
+
+
+12. Configuring AWS CodePipeline for Application Tier
+=====================================================
+
+Navigate to CodePipeline --> Create Pipeline
+
+	Name = Backend-Pipeline
+	New Service role = 3-tier-codepipeline-role
+	Advance setting --> Custom location --> Bucket --> 3-tier-project-codebuild-artifacts
+	Source = GitHub Version 2 / GitHub app
+	Connection = githubconnection
+	Repository name = ReyazShaik/3tier-app-deployment-aws
+	Branch = main
+	Webhook events = Add filters --> Push , Branch = main
+	Build = other providers =  CodeBuild
+	Project name = backend-build
+	Build type = Single build
+	Skip test phase
+	Deploy = CodeDeploy
+	Application name = backend-deploy
+	Deployment group = backend-deployment-grp
+
+
+
+13: Setup CI / CD for the Project: Configuring CodeBuild for Web Tier
+=============================================================================
+
+Navigate to CodeBuild
+
+	Create Project
+	Name = frontend-build
+	Source 1 - Primary = GitHub [By default, there is no connection from aws to GitHub. Let connect ]
+
+	Repository in my GitHub account = Select Repository : aws-cicd-react-node-mysql-app
+	Webhook = select Rebuild --> single build --> expand Webhook event filter groups --> Select Push
+	Existing Service role = 3-tier-codebuild-role
+	BuildSpec = use a BuildSpec file --> frontend/buildspec.yml
+	Logs --> Groupname = codebuild-logs-frontend
+	Create  Build Project 
+
+--> Webhook creation failed --> Go to GitHub repo --> Settings --> webhooks --> dont have any webhooks
+
+--> Go to CodeBuild --> Edit Project to retry webhook creation [Red color error]
+    Webhook = select Rebuild --> single build --> Add filter group --> Select Push
+    Check all parameter 
+
+If still doesn't work , add manually --> go to repo --> setting --> webhooks 
+
+https://codebuild.ap-south-1.amazonaws.com/webhook
+
+
+11: Setup CI / CD for the Project: Configuring CodeDeploy for Web Tier
+=============================================================================
+
+Navigate to CodeDeploy --> Applications --> Create Application
+	Name = frontend-deploy
+	Compute Platform = EC2
+	Go inside  backend-deploy and create Deployment Group
+	
+	Enter a deployment group name = frontend-Deployment-grp
+	Service role = 3-tier-codedeploy-role
+	Deployment type = In Place
+	Environment Configuration = Amazon EC2 Auto-Scaling Group = web-tier-ASG
+	Deployment Settings = CodeDeployDefault.Allatonce
+	Load Balancer = Enable Load Balancer --> Target Group = web-tier-tg
+
+
+12. Configuring AWS CodePipeline for Web Tier
+=====================================================
+
+Navigate to CodePipeline --> Create Pipeline
+
+	Name = frontend-Pipeline
+	Existing Service role = 3-tier-codepipeline-role
+	Advance setting --> Custom location --> Bucket --> 3-tier-project-codebuild-artifacts
+	Source = GitHub Version 2 / GitHub app
+	Connection = githubconnection
+	Repository name = ReyazShaik/3tier-app-deployment-aws
+	Branch = main
+	Webhook events = Add filters --> Push , Branch = main
+	Build = other providers =  CodeBuild
+	Project name = frontend-build
+	Build type = Single build
+	Skip test phase
+	Deploy = CodeDeploy
+	Application name = frontend-deploy
+	Deployment group = frontend-deployment-grp
+
+
+Setup CloudFront and R53
+
+
