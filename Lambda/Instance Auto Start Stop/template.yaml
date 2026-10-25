@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Stop/start Dev, QA and Stage EC2 instances (tag Environment) outside office hours
+
+Parameters:
+  Timezone:
+    Type: String
+    Default: UTC
+    Description: IANA timezone for the schedules (e.g. Asia/Kolkata, America/New_York)
+  StartCron:
+    Type: String
+    Default: "cron(0 9 ? * MON-FRI *)"
+  StopCron:
+    Type: String
+    Default: "cron(0 19 ? * MON-FRI *)"   # 7 PM - change to 18 for 6 PM
+  Environments:
+    Type: String
+    Default: "Dev,QA,Stage"
+
+Resources:
+  SchedulerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ec2-office-hours-scheduler
+      Runtime: python3.12
+      Handler: lambda_function.lambda_handler
+      CodeUri: .
+      Timeout: 120
+      MemorySize: 128
+      Environment:
+        Variables:
+          TAG_KEY: Environment
+          ENVIRONMENTS: !Ref Environments
+          SKIP_TAG: SchedulerSkip
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: ec2:DescribeInstances
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - ec2:StartInstances
+                - ec2:StopInstances
+              Resource: !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*"
+              Condition:
+                StringEquals:
+                  aws:ResourceTag/Environment: !Split [",", !Ref Environments]
+
+  SchedulerInvokeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: scheduler.amazonaws.com }
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: invoke-scheduler-lambda
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt SchedulerFunction.Arn
+
+  StopSchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: ec2-office-hours-stop
+      ScheduleExpression: !Ref StopCron
+      ScheduleExpressionTimezone: !Ref Timezone
+      FlexibleTimeWindow: { Mode: "OFF" }
+      Target:
+        Arn: !GetAtt SchedulerFunction.Arn
+        RoleArn: !GetAtt SchedulerInvokeRole.Arn
+        Input: '{"action":"stop"}'
+
+  StartSchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: ec2-office-hours-start
+      ScheduleExpression: !Ref StartCron
+      ScheduleExpressionTimezone: !Ref Timezone
+      FlexibleTimeWindow: { Mode: "OFF" }
+      Target:
+        Arn: !GetAtt SchedulerFunction.Arn
+        RoleArn: !GetAtt SchedulerInvokeRole.Arn
+        Input: '{"action":"start"}'
+
+  ErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: ec2-office-hours-scheduler-errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - { Name: FunctionName, Value: !Ref SchedulerFunction }
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
