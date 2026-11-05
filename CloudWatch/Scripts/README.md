@@ -266,19 +266,19 @@ sudo apt install python3 python3-pip -y
 pip3 install psutil
 ```
 
-For Amazon Linux, if needed:
+**For Amazon Linux,** if needed:
 ```
 sudo yum install python3 -y
 python3 -m pip install psutil
 ```
 
-Windows PowerShell
+**Windows PowerShell**
 ```
 winget install Python.Python.3.12
 python -m pip install psutil
 ```
 
-RHEL / Rocky Linux
+**RHEL / Rocky Linux**
 ```
 sudo dnf install python3 python3-pip -y
 python3 -m pip install psutil
@@ -286,7 +286,7 @@ python3 -m pip install psutil
 
 3. Script execution methods
 You can execute the script with different combinations of CPU, RAM and duration.
-Scenario	Command
+Scenario Command
 ```
 50% CPU, 40% RAM, 5 min	python resource_stress.py --cpu 50 --memory 40 --duration 5m
 70% CPU, 60% RAM, 10 min	python resource_stress.py --cpu 70 --memory 60 --duration 10m
