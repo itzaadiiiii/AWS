@@ -1,10 +1,10 @@
 # Install Stress 
 ```
 dnf install stress -y
-**or**
+# OR
 sudo apt install stress -y
 ```
-Now you run the command 
+**Now you run the command** 
 ```
 stress
 ```
