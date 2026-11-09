@@ -1,3 +1,4 @@
+# This file contains reusable notification and configuration functions.
 import boto3
 import json
 import os
