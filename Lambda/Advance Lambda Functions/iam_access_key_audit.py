@@ -5,7 +5,6 @@
 # - Last used: 60 days since last use.
 
 # IAM permissions:
-
 # {
 #   "Effect": "Allow",
 #   "Action": [
@@ -15,6 +14,7 @@
 #   ],
 #   "Resource": "*"
 # }
+
 import boto3
 
 from datetime import datetime, timezone
