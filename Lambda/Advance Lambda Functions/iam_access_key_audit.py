@@ -131,3 +131,5 @@ def lambda_handler(event, context):
         "total_findings": len(findings),
         "findings": findings
     }
+
+# For an enterprise implementation, add owner tagging, notification deduplication and approved exemptions.
