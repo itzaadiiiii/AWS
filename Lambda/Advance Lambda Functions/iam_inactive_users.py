@@ -1,3 +1,12 @@
+# Requirement: Identify IAM users who haven't recorded credential activity for 30 days or more.
+
+# Actions:
+# - Run daily.
+# - Identify inactive users.
+# - Notify IAM owners.
+# - Escalate users inactive for 60/90 days.
+# - Do not automatically delete users.
+
 import boto3
 import csv
 import io
