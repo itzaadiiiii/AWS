@@ -144,3 +144,7 @@ def lambda_handler(event, context):
         "inactive_users": len(inactive_users),
         "details": inactive_users
     }
+
+
+
+# Note: Credential reports don't capture every form of IAM activity, especially federated role sessions. Use CloudTrail and IAM Identity Center reporting for a complete identity review. Do not interpret missing activity as proof that a user is safe to delete.
