@@ -17,6 +17,8 @@
 #   "Resource": "*"
 # }
 
+# For production, add iam:ListUserTags if you want to exclude approved exceptions.
+
 import boto3
 import csv
 import io
