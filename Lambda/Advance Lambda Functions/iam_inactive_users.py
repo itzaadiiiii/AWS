@@ -7,6 +7,16 @@
 # - Escalate users inactive for 60/90 days.
 # - Do not automatically delete users.
 
+# IAM Permissions
+# {
+#   "Effect": "Allow",
+#   "Action": [
+#     "iam:GenerateCredentialReport",
+#     "iam:GetCredentialReport"
+#   ],
+#   "Resource": "*"
+# }
+
 import boto3
 import csv
 import io
