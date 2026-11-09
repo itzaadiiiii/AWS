@@ -1,3 +1,20 @@
+# Requirement: Identify access keys that are too old or haven't been used for a defined period.
+
+# We check two different conditions:
+# - Key age: 60/90 days since creation.
+# - Last used: 60 days since last use.
+
+# IAM permissions:
+
+# {
+#   "Effect": "Allow",
+#   "Action": [
+#     "iam:ListUsers",
+#     "iam:ListAccessKeys",
+#     "iam:GetAccessKeyLastUsed"
+#   ],
+#   "Resource": "*"
+# }
 import boto3
 
 from datetime import datetime, timezone
