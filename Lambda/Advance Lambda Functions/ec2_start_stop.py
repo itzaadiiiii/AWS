@@ -106,3 +106,15 @@ def lambda_handler(event, context):
     )
 
     return result
+
+
+
+# EventBridge Scheduler configuration:
+
+# Schedule	Event input	Purpose
+# Daily 9 PM	{"action":"stop"}	Stop Dev/QA
+# Daily 9 AM	{"action":"start"}	Start Dev/QA
+
+# Configure the timezone as Asia/Kolkata if your team follows Indian business hours.
+
+# Set the Lambda environment variable DRY_RUN=false only after validating the selected instances and exclusions.
