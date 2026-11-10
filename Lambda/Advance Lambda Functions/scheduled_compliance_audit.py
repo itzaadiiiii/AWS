@@ -156,3 +156,5 @@ def lambda_handler(event, context):
         "total_findings": len(findings),
         "findings": findings
     }
+
+# This is a starter audit, not a complete compliance scanner. For larger environments, use AWS Config managed rules and Security Hub CSPM, then use Lambda for organization-specific controls.
