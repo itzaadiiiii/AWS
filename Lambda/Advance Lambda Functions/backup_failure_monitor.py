@@ -64,3 +64,27 @@ def lambda_handler(event, context):
         "status": "alert_sent",
         "backup_job": backup_details
     }
+
+
+
+# Example notification:
+
+    # AWS BACKUP FAILURE
+    
+    # Resource: RDS Production Database
+    # Backup Job: backup-job-12345
+    
+    # State: FAILED
+    
+    # Region: ap-southeast-2
+    
+    # Action Required:
+    # 1. Investigate backup failure.
+    # 2. Check backup vault and IAM permissions.
+    # 3. Verify available recovery points.
+    # 4. Retry backup if required.
+    # 5. Create Jira incident.
+
+
+# This helps prevent situations where teams assume their backups are working without verifying actual backup job completion.
+
