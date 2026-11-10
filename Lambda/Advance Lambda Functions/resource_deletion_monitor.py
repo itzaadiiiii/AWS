@@ -76,3 +76,27 @@ def lambda_handler(event, context):
         "status": "notification_sent",
         "event": event_name
     }
+
+# Example notification:
+
+            # AWS Resource Deletion Detected
+            
+            # Account: Development
+            # Region: ap-southeast-2
+            
+            # Action: TerminateInstances
+            
+            # Performed By: developer-user
+            
+            # Instance: i-0123456789
+            
+            # Time: 2026-11-09 15:30 UTC
+            
+            # Action Required:
+            # Verify whether this deletion was intentional.
+            
+            # Recovery:
+            # Check Terraform, EC2 launch templates
+            # or available EBS snapshots.
+
+# Enterprise improvement: Use AWS Config for resource configuration history and AWS Backup for supported recovery workflows. Terraform should be the source of truth for recreating infrastructure.
