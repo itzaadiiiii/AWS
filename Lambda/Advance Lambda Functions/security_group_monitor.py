@@ -125,3 +125,23 @@ def lambda_handler(event, context):
     return {
         "findings": findings
     }
+
+
+# EventBridge event pattern:
+
+# {
+#   "source": ["aws.ec2"],
+#   "detail-type": ["AWS API Call via CloudTrail"],
+#   "detail": {
+#     "eventSource": ["ec2.amazonaws.com"],
+#     "eventName": [
+#       "AuthorizeSecurityGroupIngress",
+#       "AuthorizeSecurityGroupEgress",
+#       "ModifySecurityGroupRules",
+#       "RevokeSecurityGroupIngress",
+#       "RevokeSecurityGroupEgress"
+#     ]
+#   }
+# }
+
+# This checks the current security group configuration. For a full before/after audit, also inspect CloudTrail request parameters and AWS Config configuration history.
