@@ -1,3 +1,13 @@
+# Scheduled compliance audit – 
+# Requirement: Run daily security checks against AWS resources.
+
+# This example checks:
+# - S3 public access block.
+# - S3 default encryption.
+# - EBS encryption.
+# - Publicly exposed sensitive security group rules.
+
+
 import boto3
 
 from common import send_notification
