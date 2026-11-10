@@ -1,3 +1,9 @@
+# Resource deletion monitoring - 
+
+# Requirement: Detect when someone deletes an AWS resource, particularly in Dev and QA environments.
+# We don't automatically restore everything. We first identify the resource, account, user and time of deletion.
+
+
 from common import send_notification
 
 
