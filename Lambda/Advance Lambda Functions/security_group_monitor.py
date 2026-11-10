@@ -1,4 +1,4 @@
-# Security group modification monitoring – security_group_monitor.py
+# Security group modification monitoring – 
 
 # Requirement: Detect when someone changes security group rules, particularly when they expose sensitive ports publicly.
 
