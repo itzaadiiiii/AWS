@@ -1,3 +1,9 @@
+# Security group modification monitoring – security_group_monitor.py
+
+# Requirement: Detect when someone changes security group rules, particularly when they expose sensitive ports publicly.
+
+# Trigger: CloudTrail → EventBridge → Lambda.
+
 import boto3
 
 from common import send_notification
