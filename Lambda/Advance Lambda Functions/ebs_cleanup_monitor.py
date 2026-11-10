@@ -76,3 +76,5 @@ def lambda_handler(event, context):
         "total_volumes": len(findings),
         "findings": findings
     }
+
+# For automated deletion, add a separate approval-controlled function that checks backup availability, ownership, retention and an explicit AutoCleanup=true tag.
