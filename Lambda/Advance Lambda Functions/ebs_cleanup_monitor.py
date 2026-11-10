@@ -1,3 +1,11 @@
+# Unattached EBS volume monitoring -
+
+
+
+# Requirement: Identify EBS volumes that have been unattached for more than 30 days.
+# We first generate a report instead of deleting them.
+
+
 import boto3
 
 from datetime import datetime, timezone
