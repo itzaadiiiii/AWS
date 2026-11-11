@@ -78,3 +78,12 @@ def lambda_handler(event, context):
         "total_findings": len(findings),
         "findings": findings
     }
+
+# Enterprise use case:
+#     - Monitor imported certificates.
+#     - Monitor certificates requiring manual renewal.
+#     - Notify owners before expiration.
+#     - Create Jira tickets for renewal.
+#     - Validate certificates used by ALB, CloudFront and other supported services.
+
+# Note: ACM automatically renews eligible Amazon-issued certificates when renewal requirements are met. This Lambda is mainly useful for additional monitoring and certificates that need manual intervention.
