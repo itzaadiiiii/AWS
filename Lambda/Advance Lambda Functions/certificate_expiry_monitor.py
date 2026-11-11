@@ -1,3 +1,8 @@
+# ACM certificate expiration monitoring - 
+
+# Requirement: Identify certificates that are approaching expiration.
+# For example, notify the DevOps team 30 days before an imported certificate expires.
+
 import boto3
 
 from datetime import datetime, timezone
