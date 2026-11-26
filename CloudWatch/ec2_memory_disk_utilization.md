@@ -16,7 +16,15 @@ This `userdata.sh` script runs when an Amazon EC2 Linux instance launches to ins
 * Extracts the archive and runs `install.sh` with `sudo` to install the agent binary and service
 * Runs `amazon-cloudwatch-agent-ctl` in EC2 mode (`-m ec2`) to fetch the JSON configuration from SSM Parameter Store (`/alarm/AWS-CWAgentLinConfig`), apply it (`fetch-config`), and start the agent (`-s`), typically for collecting OS-level telemetry like memory and disk metrics referenced in `memory_disk.json`
 
-To verify it is running on an instance, check `sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status` (or `systemctl status amazon-cloudwatch-agent.service`) and confirm metrics appear under the `CWAgent` namespace in CloudWatch.
+To verify it is running on an instance, check 
+```
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
+```
+(or )
+```
+systemctl status amazon-cloudwatch-agent.service
+```
+ And confirm metrics appear under the `CWAgent` namespace in CloudWatch.
 
 ### Easier Ways Than the 3-Year-Old `wget`/`unzip` Pattern
 
