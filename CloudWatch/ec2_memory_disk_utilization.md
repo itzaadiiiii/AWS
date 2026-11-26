@@ -1,7 +1,7 @@
 # Steps:
-## 1) Create role with SSM & CLoudWatch Full Access
-## 2) Create a parameter in Systems Manager with the name "/alarm/AWS-CWAgentLinConfig" and store the value.
-## 3) Create instance, Attach above role and Paste the below code in Userdata Script while Launching Instance: 
+### 1) Create role with SSM & CLoudWatch Full Access
+### 2) Create a parameter in Systems Manager with the name "/alarm/AWS-CWAgentLinConfig" and store the value.
+### 3) Create instance, Attach above role and Paste the below code in Userdata Script while Launching Instance: 
 
 ```bash
 #!/bin/bash
