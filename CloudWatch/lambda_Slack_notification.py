@@ -1,6 +1,12 @@
-# Create a lambda function with Python environmnent and Paste this code.
-# Create the slack webhook and To create Goto api.slack.com/apps -> Create app from scratch ---> Give name and select Workspace and Create app, Once created Goto --> Incoming Webhooks --> Activate incoming webhooks ---> Add New Webhook ---> (So while creating you need a Channel so Create Channel inside the Slack i.e. CloudWatch Alarms), now you can mention this channel and Create a webhook, Once created --> Copy the Webhook URL. 
-# Create an envrironment variable inside lambda ---> Configuration ----> Environment variables ---> Add --->  SLACK_WEBHOOK_URL = "<paste webhook url>"
+#Steps:-
+
+# 1) Create a lambda function with Python environmnent and Paste this code.
+# 2) Create the slack webhook and To create Goto api.slack.com/apps -> Create app from scratch ---> Give name and select Workspace and Create app, Once created Goto --> Incoming Webhooks --> Activate incoming webhooks ---> Add New Webhook ---> (So while creating you need a Channel so Create Channel inside the Slack i.e. CloudWatch Alarms), now you can mention this channel and Create a webhook, Once created --> Copy the Webhook URL. 
+# 3) Create an envrironment variable inside lambda ---> Configuration ----> Environment variables ---> Add --->  SLACK_WEBHOOK_URL = "<paste webhook url>"
+# 4) Create a SNS topic (Standard), ---> Create a Subscription --> Select Protocol (here we have differernt options -> Select AWS Lambda (for pagerduty we select HTTPS)---> Select Lambda function --> Create subsciption.
+# 5) Change the Lambda Execution time ---> Goto --> Lambda ---> Configuration ----> Change the execution time the timeout from 3 Seconds to to 40 seconds
+# 6) Create a alarm in cloudwatch for anything like you can do for CPU utitlization as of now you can set 15% for testing, and create alarm select the SNS topic we created, the alarm is for 2 states like In alarm and OK state as below python code is for both which show red color in In alarm state and Green color in OK state
+# 7) login to instanec and Install stress and put some load; sudo su , apt update && apt install stress -y, command to put load:- type stress, Copy the example and paste and give just time to 100000s, And wait for some time it will send an slack alert, once done you can stop the stress load --> cntrl c
 import json
 import os
 import urllib.request
